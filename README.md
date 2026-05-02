@@ -1,7 +1,7 @@
 # SplitToFloppies
 > by Elmar Wenners / chaozz.nl / github.com/chaozznl
 
-A PowerShell tool that compresses a folder, splits it into floppy‑sized chunks, and generates FAT12 IMG files suitable for vintage PCs with Gotek floppy emulators.
+A PowerShell tool that compresses a folder, splits it into floppy sized chunks, and generates FAT12 IMG files suitable for vintage PCs with Gotek floppy emulators.
 
 ![screenshot](https://chaozz.nl/wp-content/uploads/2026/05/SplitToFloppies-768x395.png)
 
@@ -54,35 +54,36 @@ A PowerShell tool that compresses a folder, splits it into floppy‑sized chunks
 
 ### Example Output
 
-Step 1: Creating ZIP from folder...
-Step 2: Splitting ZIP file into chunks...
-Step 3: Creating IMG files...
+```
+PS G:\mtools> .\SplitToFloppies.ps1 720 'G:\images\MS-DOS Software\GAMES\doom8088\VGA\' 'G:\images\MS-DOS Software\GAMES\doom8088\VGA_split\'
+>> Step 1: Creating ZIP from folder...
+>> Step 2: Splitting ZIP file into chunks...
+>> Step 3: Creating UNSPLIT.BAT...
+>> Step 4: Creating IMG files...
+   - Creating DISK001.img...
+   - Creating DISK002.img...
+   - Creating DISK003.img...
+   - Creating DISK004.img...
 
-Creating DISK001.img...
-
-Creating DISK002.img...
-
-Ready.
-2 floppy images created in: g:\doom8088\cga_split
-
-## Output Structure
-
-The output folder will contain:
-
-- `chunks/chunk001.bin`, `chunks/chunk002.bin`, ...
-- `DISK001.img`, `DISK002.img`, ...
+>> Ready.
+>> 4 floppy images created in: G:\images\MS-DOS Software\GAMES\doom8088\VGA_split\
+>> UNSPLIT.BAT added to last floppy image.
+PS G:\mtools>
+```
 
 ## Installing on the Target PC
 
-1. Mount the first IMG on the Gotek.
+1. Mount the first IMG on a Gotek.
 2. On the target PC, copy the contents into a working folder:
 
 `copy a:\*.* .`
 
 3. Mount the next IMG and repeat.
-4. After all chunks are copied, merge them:
+4. After all chunks are copied, unsplit the result by typing:
 
-`copy /b chunk001.zip+chunk002.zip+chunk003.zip bigzip.zip`
+`unsplit.bat`
+
+This will recreate the OUTPUT.ZIP file on the target system.
 
 5. Extract using PKUNZIP:
 
