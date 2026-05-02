@@ -1,5 +1,5 @@
 # SplitToFloppies
-by Elmar Wenners / chaozz.nl / github.com/chaozznl
+> by Elmar Wenners / chaozz.nl / github.com/chaozznl
 
 A PowerShell tool that compresses a folder, splits it into floppy‑sized chunks, and generates FAT12 IMG files suitable for vintage PCs with Gotek floppy emulators.
 
@@ -46,7 +46,7 @@ A PowerShell tool that compresses a folder, splits it into floppy‑sized chunks
 
 ### Syntax
 
-SplitToFloppies.ps1 <floppySizeKB> <sourceFolder> <outputFolder>
+`SplitToFloppies.ps1 <floppySizeKB> <sourceFolder> <outputFolder>`
 
 ### Example
 
