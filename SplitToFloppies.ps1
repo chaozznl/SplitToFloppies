@@ -1,5 +1,5 @@
 # SplitToFloppies
-# By E. Wenners
+# By Elmar Wenners
 # chaozz.nl / github.com/chaozznl
 
 param(
@@ -14,10 +14,9 @@ param(
 )
 
 # -------------------------------
-# Input validation
+# Validate input
 # -------------------------------
 
-# Validate DiskSize is numeric
 if (-not ($DiskSize -as [int])) {
     Write-Host "ERROR: DiskSize must be a numeric value in KB (e.g., 720)."
     exit 1
@@ -25,7 +24,6 @@ if (-not ($DiskSize -as [int])) {
 
 $DiskSize = [int]$DiskSize
 
-# Validate DiskSize is a known floppy size
 $ValidFloppySizes = @(160, 180, 320, 360, 720, 1200, 1440, 2880)
 
 if ($DiskSize -notin $ValidFloppySizes) {
@@ -33,13 +31,11 @@ if ($DiskSize -notin $ValidFloppySizes) {
     exit 1
 }
 
-# Validate SourceFolder exists
 if (-not (Test-Path $SourceFolder)) {
     Write-Host "ERROR: SourceFolder does not exist: $SourceFolder"
     exit 1
 }
 
-# Validate OutputFolder (create if missing)
 if (-not (Test-Path $OutputFolder)) {
     try {
         New-Item -ItemType Directory -Path $OutputFolder | Out-Null
@@ -51,22 +47,18 @@ if (-not (Test-Path $OutputFolder)) {
 }
 
 # -------------------------------
-# Derived values
+# Setup some values
 # -------------------------------
 
 $DiskBytes = $DiskSize * 1024
-
-# Chunk size must be slightly smaller than the floppy size so it fits
 $ChunkSize = $DiskSize - 60
 
 $ChunkFolder = "chunks"
 $ZIPname = "output.zip"
 
-# Absolute paths for mtools executables
 $MFormat = Join-Path $PSScriptRoot "mformat.exe"
 $MCopy   = Join-Path $PSScriptRoot "mcopy.exe"
 
-# Validate mtools presence
 if (!(Test-Path $MFormat)) {
     Write-Host "ERROR: mformat.exe not found in script folder."
     exit 1
@@ -77,7 +69,7 @@ if (!(Test-Path $MCopy)) {
 }
 
 # -------------------------------
-# Step 1: Create ZIP
+# Step 1: Create ZIP  of folder
 # -------------------------------
 
 $zipPath = Join-Path $OutputFolder $ZIPname
@@ -101,7 +93,7 @@ $buffer = New-Object byte[] $bufferSize
 $index = 1
 
 while (($read = $fs.Read($buffer, 0, $bufferSize)) -gt 0) {
-    $chunkName = "chunk{0:D3}.bin" -f $index
+    $chunkName = "CHUNK{0:D3}.BIN" -f $index
     $chunkPath = Join-Path $ChunkFolder $chunkName
     $out = [System.IO.File]::OpenWrite($chunkPath)
     $out.Write($buffer, 0, $read)
@@ -110,11 +102,43 @@ while (($read = $fs.Read($buffer, 0, $bufferSize)) -gt 0) {
 }
 $fs.Close()
 
+$totalChunks = $index - 1
+
 # -------------------------------
-# Step 3: Create IMG files
+# Step 3: Generate JOIN.BAT
 # -------------------------------
 
-Write-Host ">> Step 3: Creating IMG files..."
+Write-Host ">> Step 3: Creating UNSPLIT.BAT..."
+
+$batchPath = Join-Path $OutputFolder "UNSPLIT.BAT"
+
+$copyLine = "COPY /B "
+
+for ($i = 1; $i -le $totalChunks; $i++) {
+    $chunkName = "CHUNK{0:D3}.BIN" -f $i
+    if ($i -eq 1) {
+        $copyLine += "$chunkName"
+    } else {
+        $copyLine += " + $chunkName"
+    }
+}
+
+$copyLine += " OUTPUT.ZIP"
+
+$batchContent = @(
+    "@ECHO OFF"
+    "ECHO Recombining $totalChunks chunks into OUTPUT.ZIP..."
+    $copyLine
+    "ECHO Done."
+)
+
+Set-Content -Path $batchPath -Value $batchContent -Encoding ASCII
+
+# -------------------------------
+# Step 4: Create IMG files
+# -------------------------------
+
+Write-Host ">> Step 4: Creating IMG files..."
 
 $diskIndex = 1
 foreach ($chunk in Get-ChildItem $ChunkFolder | Sort-Object Name) {
@@ -124,14 +148,16 @@ foreach ($chunk in Get-ChildItem $ChunkFolder | Sort-Object Name) {
 
     Write-Host "   - Creating $imgName..."
 
-    # 1. Create an empty floppy image
     [IO.File]::WriteAllBytes($imgPath, (New-Object byte[] $DiskBytes))
 
-    # 2. Format the image as FAT12
     & $MFormat -f $DiskSize -i $imgPath ::
 
-    # 3. Copy the chunk into the floppy image
     & $MCopy -i $imgPath $chunk.FullName ::
+
+    # Add JOIN.BAT to the last disk
+    if ($diskIndex -eq $totalChunks) {
+        & $MCopy -i $imgPath $batchPath ::
+    }
 
     $diskIndex++
 }
@@ -139,3 +165,4 @@ foreach ($chunk in Get-ChildItem $ChunkFolder | Sort-Object Name) {
 Write-Host ""
 Write-Host ">> Ready."
 Write-Host ">> $($diskIndex-1) floppy images created in: $OutputFolder"
+Write-Host ">> UNSPLIT.BAT added to last floppy image."
