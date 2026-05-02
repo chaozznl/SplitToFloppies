@@ -83,7 +83,7 @@ The output folder will contain:
 3. Mount the next IMG and repeat.
 4. After all chunks are copied, merge them:
 
-copy /b chunk001.zip+chunk002.zip+chunk003.zip bigzip.zip
+`copy /b chunk001.zip+chunk002.zip+chunk003.zip bigzip.zip`
 
 5. Extract using PKUNZIP:
 
