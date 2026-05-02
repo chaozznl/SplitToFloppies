@@ -69,9 +69,8 @@ Ready.
 
 The output folder will contain:
 
-- `chunk001.bin`, `chunk002.bin`, ...
+- `chunks/chunk001.bin`, `chunks/chunk002.bin`, ...
 - `DISK001.img`, `DISK002.img`, ...
-- (Optional) `bigzip.zip` after merging on the target PC
 
 ## Installing on the Target PC
 
