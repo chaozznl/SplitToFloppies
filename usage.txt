@@ -1,0 +1,1 @@
+PS C:\mtools> .\SplitToFloppies.ps1 -SourceFolder "c:\mtools\doom8088\mda" -OutputFolder "c:\mtools\doom8088\mda_split"
